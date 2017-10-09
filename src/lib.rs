@@ -1,19 +1,21 @@
 pub mod cuda_runtime;
 pub mod cuda_ffi;
 
-pub use self::cuda_ffi::Result;
-pub use cuda_runtime::dim3;
+pub use self::cuda_ffi::{driver_version, runtime_version, profiler_initialize, profiler_start,
+                         profiler_stop, Result};
+pub use self::cuda_runtime::dim3;
 
 use std::mem;
+
 use cuda_runtime::cudaMemcpyKind;
 
-pub struct CudaMem<T> {
+pub struct DeviceMem<T> {
     ptr: *mut T,
     len: usize,
 }
 
-impl<T> CudaMem<T> {
-    pub fn from_host_slice(src: &[T]) -> Result<CudaMem<T>>
+impl<T> DeviceMem<T> {
+    pub fn from_host_slice(src: &[T]) -> Result<DeviceMem<T>>
         where T: Copy
     {
         let allocation_size = src.len() * mem::size_of::<T>();
@@ -24,7 +26,7 @@ impl<T> CudaMem<T> {
                              allocation_size,
                              cudaMemcpyKind::cudaMemcpyHostToDevice)?;
         }
-        Ok(CudaMem {
+        Ok(DeviceMem {
             ptr,
             len: src.len(),
         })
@@ -36,16 +38,16 @@ impl<T> CudaMem<T> {
         unsafe {
             cuda_ffi::memcpy(v.as_mut_ptr(),
                              self.as_ptr(),
-                             self.size(),
+                             self.bytes_len(),
                              cudaMemcpyKind::cudaMemcpyDeviceToHost)?;
         }
         Ok(v)
     }
 
-    pub unsafe fn allocate(len: usize) -> Result<CudaMem<T>> {
+    pub unsafe fn allocate(len: usize) -> Result<DeviceMem<T>> {
         let allocation_size = len * mem::size_of::<T>();
         let ptr: *mut T = cuda_ffi::malloc(allocation_size)?;
-        Ok(CudaMem { ptr, len: len })
+        Ok(DeviceMem { ptr, len: len })
     }
 
     pub fn len(&self) -> usize {
@@ -60,15 +62,15 @@ impl<T> CudaMem<T> {
     pub fn into_raw(self) -> *mut T {
         self.ptr
     }
-    pub fn from_raw(ptr: *mut T, len: usize) -> CudaMem<T> {
-        CudaMem { ptr, len }
+    pub fn from_raw(ptr: *mut T, len: usize) -> DeviceMem<T> {
+        DeviceMem { ptr, len }
     }
-    fn size(&self) -> usize {
+    pub fn bytes_len(&self) -> usize {
         self.len() * mem::size_of::<T>()
     }
 }
 
-impl<T> Drop for CudaMem<T> {
+impl<T> Drop for DeviceMem<T> {
     fn drop(&mut self) {
         unsafe {
             let _ = cuda_ffi::free(self.ptr);
@@ -151,8 +153,38 @@ macro_rules! cuda_call {
     );
 }
 
+pub struct Event(cuda_runtime::cudaEvent_t);
+impl Event {
+    pub fn create() -> Result<Event> {
+        let ev = cuda_ffi::event_create()?;
+        Ok(Event(ev))
+    }
+    pub fn elapsed_time(&self, end: &Event) -> Result<f32> {
+        unsafe { cuda_ffi::event_elapsed_time(self.0, end.0) }
+    }
+    pub fn query(&self) -> Result<bool> {
+        unsafe { cuda_ffi::event_query(self.0) }
+    }
+    pub fn record(&self) -> Result<()> {
+        unsafe { cuda_ffi::event_record(self.0) }
+    }
+    pub fn synchronize(&self) -> Result<()> {
+        unsafe { cuda_ffi::event_synchronize(self.0) }
+    }
+}
+impl Drop for Event {
+    fn drop(&mut self) {
+        unsafe {
+            let _ = cuda_ffi::event_destroy(self.0);
+        }
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     #[test]
-    fn it_works() {}
+    fn it_works() {
+        unimplemented!();
+    }
 }
