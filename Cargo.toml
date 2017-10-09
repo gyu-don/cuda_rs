@@ -1,0 +1,7 @@
+[package]
+authors = ["gyu-don <takumi.kt+git@gmail.com>"]
+name = "cuda_rs"
+version = "0.1.0"
+
+[build-dependencies]
+bindgen = "0.30.0"
