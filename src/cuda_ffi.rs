@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-use std::borrow::Cow;
 use std::error;
 use std::ffi::CStr;
 use std::fmt::{self, Display, Formatter};
@@ -43,11 +42,15 @@ impl Error {
     fn cuda_error(&self) -> cudaError_t {
         self.raw
     }
-    fn error_name(&self) -> Cow<str> {
-        unsafe { CStr::from_ptr(cuda_runtime::cudaGetErrorName(self.raw)) }.to_string_lossy()
+    fn error_name(&self) -> String {
+        unsafe { CStr::from_ptr(cuda_runtime::cudaGetErrorName(self.raw)) }
+            .to_string_lossy()
+            .into_owned()
     }
-    fn error_string(&self) -> Cow<str> {
-        unsafe { CStr::from_ptr(cuda_runtime::cudaGetErrorString(self.raw)) }.to_string_lossy()
+    fn error_string(&self) -> String {
+        unsafe { CStr::from_ptr(cuda_runtime::cudaGetErrorString(self.raw)) }
+            .to_string_lossy()
+            .into_owned()
     }
 }
 impl error::Error for Error {
