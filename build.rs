@@ -39,6 +39,7 @@ fn do_bindgen_if_required() {
         let bindings = bindgen::Builder::default()
             .clang_arg(format!("-I{}", cuda_include.to_str().unwrap()))
             .header(headers_path.to_str().unwrap())
+            .trust_clang_mangling(false)
             .generate()
             .expect("Unable to generate bindings");
 
