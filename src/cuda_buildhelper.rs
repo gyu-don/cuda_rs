@@ -35,6 +35,10 @@ pub fn get_include_dir(cuda_path: &str) -> path::PathBuf {
     path::Path::new(cuda_path).join("include")
 }
 
+pub fn get_lib64_dir(cuda_path: &str) -> path::PathBuf {
+    path::Path::new(cuda_path).join("lib64")
+}
+
 pub fn get_nvcc(cuda_path: &str) -> path::PathBuf {
     path::Path::new(cuda_path).join(NVCC)
 }

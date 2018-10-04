@@ -49,6 +49,9 @@ fn do_bindgen_if_required() {
 }
 
 fn main() {
+    let cuda_path = get_cuda_path_from_env().unwrap();
+    let cuda_lib_path = get_lib64_dir(&cuda_path);
+    println!("cargo:rustc-link-search={}", cuda_lib_path.display());
     println!("cargo:rustc-link-lib=cudart");
     do_bindgen_if_required();
 }
