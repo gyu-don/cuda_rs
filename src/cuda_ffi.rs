@@ -30,6 +30,7 @@ pub fn runtime_version() -> raw::c_int {
 pub struct Error {
     raw: cudaError_t,
 }
+
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> result::Result<(), fmt::Error> {
         write!(f,
@@ -38,6 +39,7 @@ impl Display for Error {
                    .to_string_lossy())
     }
 }
+
 impl Error {
     fn cuda_error(&self) -> cudaError_t {
         self.raw
@@ -53,9 +55,16 @@ impl Error {
             .into_owned()
     }
 }
+
 impl error::Error for Error {
     fn description(&self) -> &str {
         "CUDA Error: see error_name() or error_string()"
+    }
+}
+
+impl From<cudaError_t> for Error {
+    fn from(err: cudaError_t) -> Error {
+        Error { raw: err }
     }
 }
 
