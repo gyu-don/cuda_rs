@@ -41,15 +41,17 @@ impl Display for Error {
 }
 
 impl Error {
-    fn cuda_error(&self) -> cudaError_t {
+    pub fn cuda_error(&self) -> cudaError_t {
         self.raw
     }
-    fn error_name(&self) -> String {
+
+    pub fn error_name(&self) -> String {
         unsafe { CStr::from_ptr(cuda_runtime::cudaGetErrorName(self.raw)) }
             .to_string_lossy()
             .into_owned()
     }
-    fn error_string(&self) -> String {
+
+    pub fn error_string(&self) -> String {
         unsafe { CStr::from_ptr(cuda_runtime::cudaGetErrorString(self.raw)) }
             .to_string_lossy()
             .into_owned()
