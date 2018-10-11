@@ -3,7 +3,7 @@ pub mod cuda_ffi;
 pub mod cuda_buildhelper;
 
 pub use self::cuda_ffi::{driver_version, runtime_version, profiler_initialize, profiler_start,
-                         profiler_stop, Result};
+                         profiler_stop, Error, Result};
 pub use self::cuda_runtime::dim3;
 
 use std::mem;
