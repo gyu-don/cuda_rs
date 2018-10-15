@@ -17,7 +17,8 @@ pub struct DeviceMem<T> {
 }
 
 impl<T> DeviceMem<T> {
-    /// Creates a wrapped CUDA's `__global__` memory which is allocated and copied by specified slice.
+    /// Creates a wrapped CUDA's `__global__` memory
+    /// which is allocated and copied by specified slice.
     pub fn from_host_slice(src: &[T]) -> Result<DeviceMem<T>> {
         let allocation_size = src.len() * mem::size_of::<T>();
         let ptr: *mut T = unsafe { cuda_ffi::malloc(allocation_size)? };
@@ -76,7 +77,7 @@ impl<T> DeviceMem<T> {
         Ok(())
     }
 
-    /// Returns a value which is copied an element at that position or `None` if out of bound.
+    /// Returns a value which is a copied element from specified position or `None` if out of bound.
     pub fn get(&self, idx: usize) -> Result<Option<T>> {
         if idx >= self.len() {
             return Ok(None);
@@ -88,6 +89,22 @@ impl<T> DeviceMem<T> {
                              mem::size_of::<T>(),
                              cudaMemcpyKind::cudaMemcpyDeviceToHost)?;
             Ok(Some(v))
+        }
+    }
+
+    /// Set a value to specified element.
+    /// Returns `Ok(Some(()))` if succeeded, `Err(CudaError)` when CudaError occured,
+    /// `Ok(None)` if out of bound.
+    pub fn set(&mut self, idx: usize, val: &T) -> Result<Option<()>> {
+        if idx >= self.len() {
+            return Ok(None);
+        }
+        unsafe {
+            cuda_ffi::memcpy(self.as_mut_ptr().offset(idx as isize),
+                             val,
+                             mem::size_of::<T>(),
+                             cudaMemcpyKind::cudaMemcpyHostToDevice)?;
+            Ok(Some(()))
         }
     }
 
@@ -181,7 +198,11 @@ impl<'a> ToDim3 for &'a dim3 {
 #[macro_export]
 macro_rules! dim3 {
     ($x: expr, $y: expr, $z: expr) => {
-        dim3 { x: $x as std::os::raw::c_uint, y: $y as std::os::raw::c_uint, z: $z as std::os::raw::c_uint }
+        dim3 {
+            x: $x as std::os::raw::c_uint,
+            y: $y as std::os::raw::c_uint,
+            z: $z as std::os::raw::c_uint
+        }
     };
     ($x: expr, $y: expr) => {
         dim3 { x: $x as std::os::raw::c_uint, y: $y as std::os::raw::c_uint, z: 1 }
